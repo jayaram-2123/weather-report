@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A premium glassmorphic Weather Forecast application featuring current weather statistics, a 5-day forecast, dynamic backgrounds, geolocation, and search history.">
+  <title>AeroSky | Premium Weather Forecast</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome for fallback/utility icons if needed -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="default-theme">
+  <!-- Interactive Particles / Background Glow Elements for premium depth -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <!-- Animated Sun/Cloud Logo SVG -->
+          <svg viewBox="0 0 64 64" width="40" height="40" class="svg-logo">
+            <defs>
+              <linearGradient id="logo-sun-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFD600" />
+                <stop offset="100%" stop-color="#FF6D00" />
+              </linearGradient>
+            </defs>
+            <circle cx="38" cy="26" r="12" fill="url(#logo-sun-grad)" class="logo-sun" />
+            <path d="M20 48h24a12 12 0 0 0 0-24 11.9 11.9 0 0 0-4.5.9A16 16 0 0 0 8 36a12 12 0 0 0 12 12z" fill="rgba(255,255,255,0.85)" class="logo-cloud" />
+          </svg>
+        </div>
+        <span class="logo-text">AeroSky</span>
+      </div>
+      
+      <!-- Right Header Actions -->
+      <div class="header-actions">
+        <!-- Unit Toggle (Celsius/Fahrenheit) -->
+        <button id="unit-toggle" class="action-btn" title="Toggle Units" aria-label="Toggle Temperature Units">
+          <span class="unit-text">°C</span>
+        </button>
+        <!-- Dark/Light Mode Toggle -->
+        <button id="theme-toggle" class="action-btn" title="Toggle Theme" aria-label="Toggle Light/Dark Mode">
+          <i class="fas fa-moon"></i>
+        </button>
+        <!-- API Configuration Button -->
+        <button id="settings-btn" class="action-btn settings-btn" title="API Configuration" aria-label="Configure API Key">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Dashboard -->
+    <main class="dashboard-main">
+      
+      <!-- Left Sidebar: Controls & History -->
+      <section class="sidebar-section">
+        <!-- Search Area -->
+        <div class="glass-card search-card">
+          <form id="search-form" class="search-form" onsubmit="event.preventDefault();">
+            <div class="input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="search-input" placeholder="Search city (e.g., Paris)..." autocomplete="off" aria-label="Search city">
+              <button type="button" id="geo-btn" class="geo-btn" title="Use current location" aria-label="Use current location">
+                <i class="fas fa-location-crosshairs"></i>
+              </button>
+            </div>
+            <button type="submit" id="search-submit" class="search-btn">Search</button>
+          </form>
+          <div id="search-validation-msg" class="validation-msg">Please enter a city name</div>
+        </div>
+
+        <!-- Recent Searches List -->
+        <div class="glass-card history-card" id="history-card">
+          <div class="history-header">
+            <h3>Recent Searches</h3>
+            <button id="clear-history-btn" class="text-btn">Clear</button>
+          </div>
+          <ul id="history-list" class="history-list">
+            <!-- Dynamically populated -->
+          </ul>
+        </div>
+      </section>
+
+      <!-- Right Dashboard: Weather Display -->
+      <section class="weather-section">
+        
+        <!-- Loading State Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+          <div class="spinner-container">
+            <div class="double-bounce1"></div>
+            <div class="double-bounce2"></div>
+          </div>
+          <p>Fetching weather data...</p>
+        </div>
+
+        <!-- Error Card -->
+        <div id="error-card" class="glass-card error-card hidden">
+          <div class="error-icon">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <h2 id="error-title">City Not Found</h2>
+          <p id="error-message">We couldn't retrieve weather data for this location. Please check your spelling or API configuration.</p>
+          <button id="error-action-btn" class="error-action-btn">Try Again</button>
+        </div>
+
+        <!-- API Key Setup Alert (Shows when no API key configured) -->
+        <div id="api-alert" class="glass-card error-card hidden">
+          <div class="error-icon" style="color: var(--warning-color);">
+            <i class="fas fa-key"></i>
+          </div>
+          <h2>API Key Required</h2>
+          <p>You need an OpenWeatherMap API key to use this app. Please configure your key in the settings panel.</p>
+          <button id="setup-api-btn" class="setup-btn">Configure Key</button>
+        </div>
+
+        <!-- Active Weather Details Container -->
+        <div id="weather-dashboard" class="weather-dashboard-grid">
+          
+          <!-- Current Weather Core Card -->
+          <div class="glass-card main-weather-card">
+            <div class="weather-main-header">
+              <div class="location-info">
+                <h1 id="city-name">--</h1>
+                <span id="current-date">--</span>
+              </div>
+              <div class="weather-badge" id="weather-badge">
+                <span id="weather-desc">--</span>
+              </div>
+            </div>
+            
+            <div class="weather-display">
+              <div class="temp-container">
+                <span id="temp-val">--</span>
+                <span class="temp-unit">°C</span>
+              </div>
+              <div id="weather-icon-container" class="weather-icon-large">
+                <!-- SVG Weather Icon will be dynamically injected here -->
+                <i class="fas fa-cloud-sun fallback-weather-icon"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Meteorological Stats Card -->
+          <div class="glass-card details-grid-card">
+            <h3>Weather Details</h3>
+            <div class="details-grid">
+              
+              <!-- Feels Like -->
+              <div class="detail-item">
+                <div class="detail-icon-wrap" style="--icon-color: #ff9f43">
+                  <i class="fas fa-thermometer-half"></i>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-label">Feels Like</span>
+                  <span class="detail-value" id="feels-like-val">--</span>
+                </div>
+              </div>
+
+              <!-- Humidity -->
+              <div class="detail-item">
+                <div class="detail-icon-wrap" style="--icon-color: #54a0ff">
+                  <i class="fas fa-droplet"></i>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-label">Humidity</span>
+                  <span class="detail-value" id="humidity-val">--</span>
+                </div>
+              </div>
+
+              <!-- Wind Speed -->
+              <div class="detail-item">
+                <div class="detail-icon-wrap" style="--icon-color: #1dd1a1">
+                  <i class="fas fa-wind"></i>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-label">Wind Speed</span>
+                  <span class="detail-value" id="wind-val">--</span>
+                </div>
+              </div>
+
+              <!-- Pressure -->
+              <div class="detail-item">
+                <div class="detail-icon-wrap" style="--icon-color: #5f27cd">
+                  <i class="fas fa-gauge-simple"></i>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-label">Pressure</span>
+                  <span class="detail-value" id="pressure-val">--</span>
+                </div>
+              </div>
+
+              <!-- Visibility -->
+              <div class="detail-item">
+                <div class="detail-icon-wrap" style="--icon-color: #ff6b6b">
+                  <i class="fas fa-eye"></i>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-label">Visibility</span>
+                  <span class="detail-value" id="visibility-val">--</span>
+                </div>
+              </div>
+
+              <!-- Wind Direction (Bonus Stat) -->
+              <div class="detail-item">
+                <div class="detail-icon-wrap" style="--icon-color: #00d2d3">
+                  <i class="fas fa-compass"></i>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-label">Wind Dir</span>
+                  <span class="detail-value" id="wind-dir-val">--</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 5-Day Forecast Card -->
+          <div class="glass-card forecast-card">
+            <h3>5-Day Extended Forecast</h3>
+            <div class="forecast-list" id="forecast-list">
+              <!-- Dynamically populated with forecast items -->
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>&copy; 2026 AeroSky. Created with ❤️ for a modern weather experience.</p>
+    </footer>
+  </div>
+
+  <!-- Settings / API Configuration Modal -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="glass-card modal-content">
+      <div class="modal-header">
+        <h2>Configuration</h2>
+        <button id="modal-close" class="modal-close-btn" aria-label="Close modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>To request weather data, this application connects to the OpenWeatherMap API. Please configure your key below:</p>
+        
+        <form id="settings-form" onsubmit="event.preventDefault();">
+          <div class="form-group">
+            <label for="api-key-input">OpenWeatherMap API Key</label>
+            <div class="api-input-wrap">
+              <input type="password" id="api-key-input" placeholder="Paste your API key here..." autocomplete="off">
+              <button type="button" id="toggle-key-visibility" class="toggle-vis-btn" title="Toggle visibility">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            </div>
+            <p class="form-help">Your API key is stored securely in your local browser storage and is never uploaded anywhere.</p>
+          </div>
+          
+          <div class="info-note">
+            <i class="fas fa-info-circle"></i>
+            <span>Don't have an API Key? Get one for free by signing up at <a href="https://openweathermap.org/" target="_blank" rel="noopener noreferrer">openweathermap.org <i class="fas fa-external-link-alt" style="font-size: 0.8em;"></i></a>. Note that activation might take up to 2 hours.</span>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" id="modal-cancel-btn" class="secondary-btn">Cancel</button>
+            <button type="submit" id="modal-save-btn" class="primary-btn">Save Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
